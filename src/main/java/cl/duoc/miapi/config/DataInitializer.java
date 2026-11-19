@@ -1,10 +1,15 @@
 package cl.duoc.miapi.config;
 
+import cl.duoc.miapi.model.Rol;
+import cl.duoc.miapi.model.User;
 import cl.duoc.miapi.model.Usuario;
+import cl.duoc.miapi.repository.UserRepository;
 import cl.duoc.miapi.repository.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 
@@ -23,4 +28,31 @@ public class DataInitializer {
             }
         };
     }
+    @Bean
+    CommandLineRunner crearAdmin(
+            UserRepository repository,
+            PasswordEncoder encoder,
+            @Value("${demo.admin.email}") String email,
+            @Value("${demo.admin.password}") String password) {
+
+        return args -> {
+
+            if (!repository.existsByEmail(email)) {
+                if (password.length() < 4) {
+                    throw new IllegalArgumentException(
+                            "La contraseña ADMIN debe tener al menos 12 caracteres"
+                    );
+                }
+                User admin = new User(
+                        null,
+                        "Administrador",
+                        email,
+                        encoder.encode(password),
+                        Rol.ADMIN
+                );
+                repository.save(admin);
+            }
+        };
+    }
+
 }
